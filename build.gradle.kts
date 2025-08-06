@@ -22,5 +22,5 @@ kotlin {
 }
 
 application {
-    mainClass.set("org.example.MainKt")
+    mainClass.set("org.example.FareCalculatorAppKt")
 }

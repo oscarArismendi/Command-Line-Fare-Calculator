@@ -1,7 +1,7 @@
-package org.example.Application
+package org.example.Application.Adapters
 
-import org.example.Application.services.FarePort
-import org.example.Domain.Models.FareRequest
+import org.example.Application.Ports.FarePort
+import org.example.Domain.DTOs.FareRequest
 
 class FareAdapter: FarePort {
     override fun calculateFare(fareRequest: FareRequest): Double {

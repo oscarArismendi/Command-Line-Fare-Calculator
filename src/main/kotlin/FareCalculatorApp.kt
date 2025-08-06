@@ -1,8 +1,8 @@
 package org.example
 
-import org.example.Application.FareAdapter
-import org.example.Application.FareHandler
-import org.example.Application.services.FarePort
+import org.example.Application.Adapters.FareAdapter
+import org.example.Application.Handlers.FareHandler
+import org.example.Application.Ports.FarePort
 
 fun main(args: Array<String>) {
     val fareAdapter : FarePort = FareAdapter()
