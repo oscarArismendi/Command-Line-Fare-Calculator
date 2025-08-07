@@ -2,6 +2,7 @@ package org.example.Application.Handlers
 
 import org.example.Application.Ports.FarePort
 import org.example.Domain.DTOs.FareRequest
+import java.time.LocalDateTime
 
 class FareHandler(val fareService: FarePort){
 
@@ -13,7 +14,7 @@ class FareHandler(val fareService: FarePort){
 
     private fun parseInput(args: Array<String>): FareRequest {
         try {
-            val fareRequest: FareRequest = FareRequest(args[0], args[1], args[2])
+            val fareRequest: FareRequest = FareRequest(args[0], args[1], riderType = args[2])
             return fareRequest
         } catch(e : Exception){
             throw IllegalArgumentException("Invalid input format. Expected: origin destination riderType")
