@@ -10,7 +10,9 @@ fun main(args: Array<String>) {
     val fareHandler : FareHandler = FareHandler(fareAdapter)
 
     val result = fareHandler.handleFareCalculation(args)
-    println("The calculated fare is: $result")
-
+    println("Your fare is: $${result.total}")
+    println("Breakdown:")
+    println("    - Base Fare: $${result.baseFare}")
+    println("    - Discount: $${result.discount}")
     // TODO 4: Create an UI folder inside infrastructure to handle CLI
 }
