@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 
 data class FareRequest ( val origin : String, val destination: String, val timeStamp: LocalDateTime = LocalDateTime.now(), val riderType: String)
 
-fun FareRequest.toTrp(): Trip{
+fun FareRequest.toTrip(): Trip{
     return Trip(
         origin = Station(0, this.origin),
         destination = Station(0, this.destination),
