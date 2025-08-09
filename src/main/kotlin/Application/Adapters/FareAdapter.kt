@@ -12,8 +12,7 @@ class FareAdapter: FarePort {
     override fun calculateFare(fareRequest: FareRequest): FareCalculationResult {
 
         val trip = fareRequest.toTrip()
-        println(trip.origin.name + " " + trip.destination.name + " " + fareRequest.riderType)
-        if(Station(0,"A") == Station(0,"A")){println("origin is A")}
+
         if(trip.origin == Station(0,"A") &&
             trip.destination == Station(0,"B") &&
             trip.riderType == RiderType(0, Type.ADULT )
