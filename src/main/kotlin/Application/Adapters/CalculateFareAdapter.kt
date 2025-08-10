@@ -1,6 +1,6 @@
 package org.example.Application.Adapters
 
-import org.example.Application.Ports.FarePort
+import org.example.Application.Ports.CalculateFarePort
 import org.example.Domain.DTOs.FareCalculationResult
 import org.example.Domain.DTOs.FareRequest
 import org.example.Domain.DTOs.toTrip
@@ -8,7 +8,7 @@ import org.example.Domain.Models.RiderType
 import org.example.Domain.Models.Station
 import org.example.Domain.Models.Type
 
-class FareAdapter: FarePort {
+class CalculateFareAdapter: CalculateFarePort {
     override fun calculateFare(fareRequest: FareRequest): FareCalculationResult {
 
         val trip = fareRequest.toTrip()
