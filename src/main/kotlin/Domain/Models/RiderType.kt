@@ -1,8 +1,7 @@
 package org.example.Domain.Models
 
-data class RiderType(val id: Int, val type: Type)
 
-enum class  Type(val value: String){
+enum class  RiderType(val value: String){
     ADULT("Adult"),
     CHILD("Child"),
     SENIOR("Senior")

@@ -1,3 +1,5 @@
 package org.example.Domain.DTOs
 
-data class FareCalculationResult(val baseFare: Double, val discount: Double, val total: Double = baseFare - discount, val currency: String = "USD")
+import java.math.BigDecimal
+
+data class FareCalculationResult(val baseFare: BigDecimal , val discount: BigDecimal, val total: BigDecimal = baseFare - discount, val currency: String = "USD")

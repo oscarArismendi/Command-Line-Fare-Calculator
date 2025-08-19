@@ -1,3 +1,3 @@
 package org.example.Domain.Models
 
-data class Station(val id: Int, val name: String)
+data class Station(val id: Long, val name: String)
