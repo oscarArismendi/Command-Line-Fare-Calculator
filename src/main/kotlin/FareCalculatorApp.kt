@@ -5,6 +5,7 @@ import org.example.application.handlers.CalculateFareHandler
 import org.example.application.ports.CalculateFarePort
 import org.example.application.ports.out.FareTariffPort
 import org.example.infrastructure.repositories.ExcelFareTariffRepository
+import org.example.utils.FareRequestCommandLineUI
 
 fun main(args: Array<String>) {
     val fareAdapter : CalculateFarePort = CalculateFareAdapter()
@@ -13,10 +14,9 @@ fun main(args: Array<String>) {
     val calculateFareHandler = CalculateFareHandler(fareAdapter, fareTariffRepository)
 
 
-    val result = calculateFareHandler.handleFareCalculation(args)
-    println("Your fare is: $${result.total} ${result.currency}")
-    println("Breakdown:")
-    println("    - Base Fare: $${result.baseFare} ${result.currency}")
-    println("    - Discount: $${result.discount} ${result.currency}")
+    val fareResult = calculateFareHandler.handleFareCalculation(args)
+
+    val fareRequestCommandLineUI = FareRequestCommandLineUI(fareResult)
+    fareRequestCommandLineUI.printFare()
     // TODO 1: Create an UI folder inside infrastructure to handle CLI
 }
