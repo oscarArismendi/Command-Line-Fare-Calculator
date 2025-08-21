@@ -1,4 +1,4 @@
-package org.example.Domain.Models
+package org.example.domain.models
 
 
 enum class  RiderType(val value: String){

@@ -1,8 +1,8 @@
-package org.example.Application.Handlers
+package org.example.application.handlers
 
-import org.example.Application.Ports.CalculateFarePort
-import org.example.Application.Ports.out.FareTariffPort
-import org.example.Domain.DTOs.FareCalculationResult
+import org.example.application.ports.CalculateFarePort
+import org.example.application.ports.out.FareTariffPort
+import org.example.domain.dtos.FareCalculationResult
 import org.example.utils.parseInput
 
 class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRepository : FareTariffPort){

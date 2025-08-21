@@ -1,13 +1,13 @@
-package org.example.Infrastructure.repositories
+package org.example.infrastructure.repositories
 
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.example.Application.Ports.out.FareTariffPort
-import org.example.Domain.DTOs.FareCalculationResult
-import org.example.Domain.DTOs.FareRequest
+import org.example.application.ports.out.FareTariffPort
+import org.example.domain.dtos.FareCalculationResult
+import org.example.domain.dtos.FareRequest
 import java.io.File
 import java.io.FileInputStream
 import java.math.BigDecimal

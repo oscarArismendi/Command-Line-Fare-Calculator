@@ -1,4 +1,4 @@
-package org.example.Domain.DTOs
+package org.example.domain.dtos
 
 import java.math.BigDecimal
 

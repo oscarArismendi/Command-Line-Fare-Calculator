@@ -1,10 +1,10 @@
 package org.example
 
-import org.example.Application.Adapters.CalculateFareAdapter
-import org.example.Application.Handlers.CalculateFareHandler
-import org.example.Application.Ports.CalculateFarePort
-import org.example.Application.Ports.out.FareTariffPort
-import org.example.Infrastructure.repositories.ExcelFareTariffRepository
+import org.example.application.adapters.CalculateFareAdapter
+import org.example.application.handlers.CalculateFareHandler
+import org.example.application.ports.CalculateFarePort
+import org.example.application.ports.out.FareTariffPort
+import org.example.infrastructure.repositories.ExcelFareTariffRepository
 
 fun main(args: Array<String>) {
     val fareAdapter : CalculateFarePort = CalculateFareAdapter()
