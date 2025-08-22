@@ -14,6 +14,7 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("org.apache.poi:poi:5.4.1")
     implementation("org.apache.poi:poi-ooxml:5.4.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-cli-jvm:0.3.6")
 }
 
 tasks.test {
