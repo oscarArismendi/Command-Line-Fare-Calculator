@@ -12,9 +12,11 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("io.kotest:kotest-assertions-core-jvm:6.0.1")
     implementation("org.apache.poi:poi:5.4.1")
     implementation("org.apache.poi:poi-ooxml:5.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-cli-jvm:0.3.6")
+    implementation("com.michael-bull.kotlin-result:kotlin-result:2.1.0")
 }
 
 tasks.test {
