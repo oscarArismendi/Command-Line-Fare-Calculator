@@ -1,5 +1,6 @@
 package org.example.infrastructure.repositories
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Sheet
@@ -8,22 +9,26 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.example.application.ports.out.FareTariffPort
 import org.example.domain.dtos.FareCalculationResult
 import org.example.domain.dtos.FareRequest
+import org.example.domain.models.RiderType
+import org.example.domain.models.Station
 import java.io.File
 import java.io.FileInputStream
 import java.math.BigDecimal
 import kotlin.plus
 
 class ExcelFareTariffRepository: FareTariffPort {
+
+    private val logger = KotlinLogging.logger {}
+
+    private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
+    private val inputStream = FileInputStream(file)
+    private val workbook: Workbook = XSSFWorkbook(inputStream)
+    private val productsSheet: Sheet = workbook.getSheetAt(0)
+    private val journeysSheet: Sheet = workbook.getSheetAt(1)
+    private val fareSheet: Sheet = workbook.getSheetAt(2)
     override fun findFare(fareRequest: FareRequest): FareCalculationResult {
-        val file = File("src/main/kotlin/config/tariff_V1.xlsx")
-        val inputStream = FileInputStream(file)
-        val workbook: Workbook = XSSFWorkbook(inputStream)
-
         try {
-            val productsSheet: Sheet = workbook.getSheetAt(0)
-            val journeysSheet: Sheet = workbook.getSheetAt(1)
-            val fareSheet: Sheet = workbook.getSheetAt(2)
-
+            // TODO: make a call for reading the workbook, and close the workbook.
             val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
             if(selectionKey == null){
                 throw IllegalArgumentException("Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}")
@@ -38,7 +43,9 @@ class ExcelFareTariffRepository: FareTariffPort {
             if(totalFare == null){
                 throw IllegalArgumentException("Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}")
             }
+
             return FareCalculationResult(baseFare = totalFare + productInfo.discount, discount = productInfo.discount)
+            // TODO: Not sums on Objects!
 
         }catch (e: Exception){
             throw e
@@ -48,7 +55,40 @@ class ExcelFareTariffRepository: FareTariffPort {
 
     }
 
-    private fun findSelectionKey(journeysSheet: Sheet, origin: String, destination: String): String? {
+    override fun getAllStations(): Set<Station> {
+        val response = mutableSetOf<Station>()
+        val destinationRow = journeysSheet.getRow(1)
+        for (cellIndex in 1 until destinationRow.lastCellNum) {
+            val cell = destinationRow.getCell(cellIndex)
+            response.add(Station(id = 1, name = getCellValue(cell)))
+            // TODO: Need a database to save station IDs
+        }
+        return response
+    }
+
+    override fun getAllRiderTypes(): Set<RiderType> {
+        val response = mutableSetOf<RiderType>()
+        val riderTypeColumn = getProductSheetColumn("rider type")
+
+        if (riderTypeColumn == -1) return response
+
+        // Find matching rider type row (starting from row 2)
+        for (rowIndex in 2..productsSheet.lastRowNum) {
+            val row = productsSheet.getRow(rowIndex)
+            val riderTypeCell = row.getCell(riderTypeColumn)
+            val cellValue = getCellValue(riderTypeCell).uppercase()
+            val riderType = RiderType.entries.find { it.value.uppercase() == cellValue }
+            if( riderType == null){
+                logger.error { "Unsupported rider type on the tariff: $cellValue" }
+                continue
+            }
+            response.add(riderType)
+
+        }
+        return response
+    }
+
+    fun findSelectionKey(journeysSheet: Sheet, origin: String, destination: String): String? {
         // Get destination row (row 1)
         val destinationRow = journeysSheet.getRow(1)
 
@@ -79,18 +119,8 @@ class ExcelFareTariffRepository: FareTariffPort {
     }
 
     private fun findProductInfo(productsSheet: Sheet, riderType: String): ProductInfo? {
-        val headerRow = productsSheet.getRow(1) // Tab names are in row 1
-
-        var riderTypeColumn = -1
-        var discountColumn = -1
-
-        for (cellIndex in 0 until headerRow.lastCellNum) {
-            val cellValue = getCellValue(headerRow.getCell(cellIndex)).lowercase()
-            when {
-                cellValue.contains("rider type") -> riderTypeColumn = cellIndex
-                cellValue.contains("discount") -> discountColumn = cellIndex
-            }
-        }
+        val riderTypeColumn = getProductSheetColumn("rider type")
+        val discountColumn = getProductSheetColumn("discount")
 
         if (riderTypeColumn == -1 || discountColumn == -1) return null
 
@@ -142,6 +172,19 @@ class ExcelFareTariffRepository: FareTariffPort {
         }
 
         return null
+    }
+
+    private fun getProductSheetColumn(columnName: String):Int{
+        val headerRow = productsSheet.getRow(1) // Tab names are in row 1
+
+        var columnIndex = -1
+        for (cellIndex in 0 until headerRow.lastCellNum) {
+            val cellValue = getCellValue(headerRow.getCell(cellIndex)).lowercase()
+            when {
+                cellValue.contains(columnName) -> columnIndex = cellIndex
+            }
+        }
+        return columnIndex
     }
 
     private fun getCellValue(cell: Cell?): String {

@@ -17,6 +17,10 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-cli-jvm:0.3.6")
     implementation("com.michael-bull.kotlin-result:kotlin-result:2.1.0")
+
+    // logger
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    implementation("ch.qos.logback:logback-classic:1.4.11")
 }
 
 tasks.test {
