@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
             val fareRequestCommandLineUI = FareRequestCommandLineUI(it)
             fareRequestCommandLineUI.printFare()
         },
-        failure = { println(it.message) }
+        failure = { println("Couldn't complete the request") }
     )
     // TODO 1: Create an UI folder inside infrastructure to handle CLI
 }

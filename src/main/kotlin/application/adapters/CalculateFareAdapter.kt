@@ -58,12 +58,12 @@ class CalculateFareAdapter : CalculateFarePort {
             }
 
             return Err(e)
+        } catch (e: IllegalArgumentException){
+            return Err(FareNotFound())
         }
 
     }
 
 }
-
-// TODO: Log errors but don't show the user what's actually going on.
 
 // TODO: Spotless

@@ -31,23 +31,26 @@ class ExcelFareTariffRepository: FareTariffPort {
             // TODO: make a call for reading the workbook, and close the workbook.
             val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
             if(selectionKey == null){
+                logger.error {"Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}"}
                 throw IllegalArgumentException("Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}")
             }
 
             val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
             if(productInfo == null){
+                logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
                 throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
             }
 
             val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
             if(totalFare == null){
+                logger.error { "Total fare not found for selection key: -> $selectionKey" }
                 throw IllegalArgumentException("Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}")
             }
 
             return FareCalculationResult(baseFare = totalFare + productInfo.discount, discount = productInfo.discount)
             // TODO: Not sums on Objects!
 
-        }catch (e: Exception){
+        }catch (e: IllegalArgumentException){
             throw e
         }
 

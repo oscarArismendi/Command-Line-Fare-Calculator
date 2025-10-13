@@ -28,9 +28,11 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
             }
 
             if (fareRequest.timeStamp.isBefore(
-                    LocalTime.now().plusMinutes(5)
+                    LocalTime.now().minusMinutes(5)
                 )
             ) {
+                println(fareRequest.timeStamp)
+                println(LocalTime.now().minusMinutes(5))
                 throw InvalidTimeError("Cannot book travel in the past")
             }
 
@@ -55,7 +57,7 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
                 }
 
                 is InvalidTimeError -> {
-                    logger.error { "Tariff not found in the tariff -> ${e.message}" }
+                    logger.error { "Invalid time request -> ${e.message}" }
                 }
             }
             return Err(e)
