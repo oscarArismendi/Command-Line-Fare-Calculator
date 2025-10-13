@@ -12,6 +12,8 @@ import org.example.utils.error.FareRepositoryErrors.InvalidStationError
 import org.example.utils.error.FareRepositoryErrors.RiderTypeNotFoundError
 import com.github.michaelbull.result.Result
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.example.utils.error.FareRepositoryErrors.InvalidJourneyError
+import org.example.utils.error.FareRepositoryErrors.InvalidTimeError
 
 class CalculateFareAdapter : CalculateFarePort {
     private val logger = KotlinLogging.logger {}
@@ -21,7 +23,7 @@ class CalculateFareAdapter : CalculateFarePort {
         try {
             val validStations = fareTariffRepository.getAllStations()
 
-            if ( !validStations.any { it.name == fareRequest.origin }) {
+            if ( !validStations.any { fareRequest.origin == it.name}) {
                 throw InvalidStationError(fareRequest.origin)
             }
 
@@ -46,6 +48,13 @@ class CalculateFareAdapter : CalculateFarePort {
                 is RiderTypeNotFoundError -> {
                     logger.error { "Rider Type not found in the tariff -> ${e.message}" }
                 }
+                is InvalidJourneyError -> {
+                    logger.error { "Fare not found in the tariff -> ${e.message}" }
+                }
+
+                is InvalidTimeError -> {
+                    logger.error { "Tariff not found in the tariff -> ${e.message}" }
+                }
             }
 
             return Err(e)
@@ -54,5 +63,7 @@ class CalculateFareAdapter : CalculateFarePort {
     }
 
 }
+
+// TODO: Log errors but don't show the user what's actually going on.
 
 // TODO: Spotless
