@@ -16,7 +16,7 @@ import java.io.FileInputStream
 import java.math.BigDecimal
 import kotlin.plus
 
-class ExcelFareTariffRepository: FareTariffPort {
+class ExcelFareTariffRepository : FareTariffPort {
 
     private val logger = KotlinLogging.logger {}
 
@@ -30,32 +30,32 @@ class ExcelFareTariffRepository: FareTariffPort {
         try {
             // TODO: make a call for reading the workbook, and close the workbook.
             val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
-            if(selectionKey == null){
-                logger.error {"Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}"}
-                throw IllegalArgumentException("Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}")
+            if (selectionKey == null) {
+                logger.error { "Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}" }
+                throw IllegalArgumentException(
+                    "Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}",
+                )
             }
 
             val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
-            if(productInfo == null){
+            if (productInfo == null) {
                 logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
                 throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
             }
 
             val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
-            if(totalFare == null){
+            if (totalFare == null) {
                 logger.error { "Total fare not found for selection key: -> $selectionKey" }
-                throw IllegalArgumentException("Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}")
+                throw IllegalArgumentException(
+                    "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
+                )
             }
 
             return FareCalculationResult(baseFare = totalFare + productInfo.discount, discount = productInfo.discount)
             // TODO: Not sums on Objects!
-
-        }catch (e: IllegalArgumentException){
+        } catch (e: IllegalArgumentException) {
             throw e
         }
-
-
-
     }
 
     override fun getAllStations(): Set<Station> {
@@ -81,12 +81,11 @@ class ExcelFareTariffRepository: FareTariffPort {
             val riderTypeCell = row.getCell(riderTypeColumn)
             val cellValue = getCellValue(riderTypeCell).uppercase()
             val riderType = RiderType.entries.find { it.value.uppercase() == cellValue }
-            if( riderType == null){
+            if (riderType == null) {
                 logger.error { "Unsupported rider type on the tariff: $cellValue" }
                 continue
             }
             response.add(riderType)
-
         }
         return response
     }
@@ -138,7 +137,7 @@ class ExcelFareTariffRepository: FareTariffPort {
 
                 return ProductInfo(
                     reference = getCellValue(referenceCell),
-                    discount = BigDecimal(getCellValue(discountCell))
+                    discount = BigDecimal(getCellValue(discountCell)),
                 )
             }
         }
@@ -177,7 +176,7 @@ class ExcelFareTariffRepository: FareTariffPort {
         return null
     }
 
-    private fun getProductSheetColumn(columnName: String):Int{
+    private fun getProductSheetColumn(columnName: String): Int {
         val headerRow = productsSheet.getRow(1) // Tab names are in row 1
 
         var columnIndex = -1
@@ -200,6 +199,6 @@ class ExcelFareTariffRepository: FareTariffPort {
 
     private data class ProductInfo(
         val reference: String,
-        val discount: BigDecimal
+        val discount: BigDecimal,
     )
 }

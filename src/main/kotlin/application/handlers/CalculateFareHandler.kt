@@ -8,10 +8,10 @@ import org.example.application.ports.out.FareTariffPort
 import org.example.domain.dtos.FareCalculationResult
 import org.example.utils.error.FareRepositoryErrors
 import org.example.utils.error.FareRepositoryErrors.FareNotFound
-import org.example.utils.error.FareRepositoryErrors.InvalidStationError
-import org.example.utils.error.FareRepositoryErrors.RiderTypeNotFoundError
 import org.example.utils.error.FareRepositoryErrors.InvalidJourneyError
+import org.example.utils.error.FareRepositoryErrors.InvalidStationError
 import org.example.utils.error.FareRepositoryErrors.InvalidTimeError
+import org.example.utils.error.FareRepositoryErrors.RiderTypeNotFoundError
 import org.example.utils.parseInput
 import java.time.LocalTime
 
@@ -19,7 +19,6 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
     private val logger = KotlinLogging.logger {}
 
     fun handleFareCalculation(args: Array<String>): Result<FareCalculationResult, FareRepositoryErrors> {
-
         try {
             val fareRequest = parseInput(args)
 
@@ -28,7 +27,7 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
             }
 
             if (fareRequest.timeStamp.isBefore(
-                    LocalTime.now().minusMinutes(5)
+                    LocalTime.now().minusMinutes(5),
                 )
             ) {
                 println(fareRequest.timeStamp)
@@ -37,7 +36,6 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
             }
 
             return fareService.calculateFare(fareRequest, fareTariffRepository)
-
         } catch (e: FareRepositoryErrors) {
             when (e) {
                 is FareNotFound -> {
@@ -62,9 +60,5 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
             }
             return Err(e)
         }
-
-
     }
-
-
 }

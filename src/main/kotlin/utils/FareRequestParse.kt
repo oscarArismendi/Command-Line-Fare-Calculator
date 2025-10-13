@@ -8,7 +8,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-
 fun parseInput(args: Array<String>): FareRequest {
     val parser = ArgParser("fare-calculator")
 
@@ -16,44 +15,41 @@ fun parseInput(args: Array<String>): FareRequest {
         ArgType.String,
         shortName = "f",
         fullName = "from",
-        description = "Origin station"
+        description = "Origin station",
     ).required()
 
     val to by parser.option(
         ArgType.String,
         shortName = "t",
         fullName = "to",
-        description = "Destination station"
+        description = "Destination station",
     ).required()
 
     val type by parser.option(
         ArgType.String,
         fullName = "type",
-        description = "Rider type (Adult, Child, Senior)"
+        description = "Rider type (Adult, Child, Senior)",
     ).required()
 
     val time by parser.option(
         ArgType.String,
         fullName = "time",
-        description = "Time of travel (optional)"
+        description = "Time of travel (optional)",
     )
-
-
 
     try {
         parser.parse(args)
         var localTime = LocalTime.now()
-        if(time != null){
-                localTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"))
+        if (time != null) {
+            localTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"))
         }
 
         return FareRequest(
             origin = from,
             destination = to,
             riderType = type,
-            timeStamp = localTime
+            timeStamp = localTime,
         )
-
     } catch (e: DateTimeParseException) {
         throw IllegalArgumentException("Invalid time format. Use HH:mm format.")
     } catch (e: Exception) {

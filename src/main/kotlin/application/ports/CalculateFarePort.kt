@@ -7,5 +7,8 @@ import org.example.domain.dtos.FareRequest
 import org.example.utils.error.FareRepositoryErrors
 
 interface CalculateFarePort {
-    fun calculateFare(fareRequest: FareRequest, fareTariffRepository: FareTariffPort): Result<FareCalculationResult, FareRepositoryErrors> // Need to handle different currencies
+    fun calculateFare(
+        fareRequest: FareRequest,
+        fareTariffRepository: FareTariffPort,
+    ): Result<FareCalculationResult, FareRepositoryErrors> // Need to handle different currencies
 }
