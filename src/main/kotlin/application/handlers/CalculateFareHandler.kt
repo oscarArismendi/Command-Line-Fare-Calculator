@@ -1,17 +1,67 @@
 package org.example.application.handlers
 
+import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.example.application.ports.CalculateFarePort
 import org.example.application.ports.out.FareTariffPort
 import org.example.domain.dtos.FareCalculationResult
 import org.example.utils.error.FareRepositoryErrors
+import org.example.utils.error.FareRepositoryErrors.FareNotFound
+import org.example.utils.error.FareRepositoryErrors.InvalidStationError
+import org.example.utils.error.FareRepositoryErrors.RiderTypeNotFoundError
+import org.example.utils.error.FareRepositoryErrors.InvalidJourneyError
+import org.example.utils.error.FareRepositoryErrors.InvalidTimeError
 import org.example.utils.parseInput
+import java.time.LocalTime
 
-class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRepository : FareTariffPort){
+class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRepository: FareTariffPort) {
+    private val logger = KotlinLogging.logger {}
 
     fun handleFareCalculation(args: Array<String>): Result<FareCalculationResult, FareRepositoryErrors> {
-        val fareRequest = parseInput(args)
-        return fareService.calculateFare(fareRequest, fareTariffRepository)
+
+        try {
+            val fareRequest = parseInput(args)
+
+            if (fareRequest.origin == fareRequest.destination) {
+                throw InvalidJourneyError()
+            }
+
+            if (fareRequest.timeStamp.isBefore(
+                    LocalTime.now().plusMinutes(5)
+                )
+            ) {
+                throw InvalidTimeError("Cannot book travel in the past")
+            }
+
+            return fareService.calculateFare(fareRequest, fareTariffRepository)
+
+        } catch (e: FareRepositoryErrors) {
+            when (e) {
+                is FareNotFound -> {
+                    logger.error { "Fare not found in the tariff -> ${e.message}" }
+                }
+
+                is InvalidStationError -> {
+                    logger.error { "Tariff not found in the tariff -> ${e.message}" }
+                }
+
+                is RiderTypeNotFoundError -> {
+                    logger.error { "Rider Type not found in the tariff -> ${e.message}" }
+                }
+
+                is InvalidJourneyError -> {
+                    logger.error { "Fare not found in the tariff -> ${e.message}" }
+                }
+
+                is InvalidTimeError -> {
+                    logger.error { "Tariff not found in the tariff -> ${e.message}" }
+                }
+            }
+            return Err(e)
+        }
+
+
     }
 
 
