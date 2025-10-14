@@ -9,6 +9,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.example.application.ports.out.FareTariffPort
 import org.example.domain.dtos.FareCalculationResult
 import org.example.domain.dtos.FareRequest
+import org.example.domain.models.Fare
 import org.example.domain.models.RiderType
 import org.example.domain.models.Station
 import java.io.File
@@ -50,9 +51,10 @@ class ExcelFareTariffRepository : FareTariffPort {
                     "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
                 )
             }
-
-            return FareCalculationResult(baseFare = totalFare + productInfo.discount, discount = productInfo.discount)
-            // TODO: Not sums on Objects!
+            // TODO: Use the real currency
+            val baseFare = Fare(totalFare, "USD")
+            val discount = Fare(productInfo.discount, "USD")
+            return FareCalculationResult(baseFare = baseFare, discount = discount)
         } catch (e: IllegalArgumentException) {
             throw e
         }
