@@ -6,7 +6,7 @@ import org.example.application.handlers.CalculateFareHandler
 import org.example.application.ports.CalculateFarePort
 import org.example.application.ports.out.FareTariffPort
 import org.example.infrastructure.repositories.ExcelFareTariffRepository
-import org.example.utils.FareRequestCommandLineUI
+import org.example.utils.ui.FareRequestCommandLineUI
 
 fun main(args: Array<String>) {
     val fareAdapter: CalculateFarePort = CalculateFareAdapter()
@@ -23,8 +23,6 @@ fun main(args: Array<String>) {
         },
         failure = { println("Couldn't complete the request") },
     )
-    // TODO 1: Create an UI folder inside infrastructure to handle CLI
 }
 // TODO: Write more tests
-// TODO: Spotless
 // TODO: Package name
