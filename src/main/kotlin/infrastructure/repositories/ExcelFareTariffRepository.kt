@@ -21,77 +21,94 @@ class ExcelFareTariffRepository : FareTariffPort {
     private val logger = KotlinLogging.logger {}
 
     private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
-    private val inputStream = FileInputStream(file)
-    private val workbook: Workbook = XSSFWorkbook(inputStream)
-    private val productsSheet: Sheet = workbook.getSheetAt(0)
-    private val journeysSheet: Sheet = workbook.getSheetAt(1)
-    private val fareSheet: Sheet = workbook.getSheetAt(2)
+
+    fun <T> withWorkbook(operation: (Workbook) -> T): T{
+        return FileInputStream(file).use{ inputStream ->
+            XSSFWorkbook(inputStream).use{ workbook ->
+                operation(workbook)
+            }
+        }
+    }
+
     override fun findFare(fareRequest: FareRequest): FareCalculationResult {
-        try {
-            // TODO: make a call for reading the workbook, and close the workbook.
-            val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
-            if (selectionKey == null) {
-                logger.error { "Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}" }
-                throw IllegalArgumentException(
-                    "Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}",
-                )
-            }
+        return withWorkbook { workbook ->
+            try {
+                val journeysSheet = workbook.getSheetAt(1)
+                val productsSheet = workbook.getSheetAt(0)
+                val fareSheet = workbook.getSheetAt(2)
 
-            val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
-            if (productInfo == null) {
-                logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
-                throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
-            }
+                val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
+                if (selectionKey == null) {
+                    logger.error { "Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}" }
+                    throw IllegalArgumentException(
+                        "Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}",
+                    )
+                }
 
-            val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
-            if (totalFare == null) {
-                logger.error { "Total fare not found for selection key: -> $selectionKey" }
-                throw IllegalArgumentException(
-                    "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
-                )
+                val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
+                if (productInfo == null) {
+                    logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
+                    throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
+                }
+
+                val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
+                if (totalFare == null) {
+                    logger.error { "Total fare not found for selection key: -> $selectionKey" }
+                    throw IllegalArgumentException(
+                        "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
+                    )
+                }
+                // TODO: Use the real currency
+                val baseFare = Fare(totalFare, "USD")
+                val discount = Fare(productInfo.discount, "USD")
+                FareCalculationResult(baseFare = baseFare, discount = discount)
+            } catch (e: IllegalArgumentException) {
+                throw e
             }
-            // TODO: Use the real currency
-            val baseFare = Fare(totalFare, "USD")
-            val discount = Fare(productInfo.discount, "USD")
-            return FareCalculationResult(baseFare = baseFare, discount = discount)
-        } catch (e: IllegalArgumentException) {
-            throw e
         }
     }
 
     override fun getAllStations(): Set<Station> {
-        val response = mutableSetOf<Station>()
-        val destinationRow = journeysSheet.getRow(1)
-        for (cellIndex in 1 until destinationRow.lastCellNum) {
-            val cell = destinationRow.getCell(cellIndex)
-            response.add(Station(id = 1, name = getCellValue(cell)))
-            // TODO: Need a database to save station IDs
+        return withWorkbook { workbook ->
+            val journeysSheet = workbook.getSheetAt(1)
+            val response = mutableSetOf<Station>()
+            val destinationRow = journeysSheet.getRow(1)
+            for (cellIndex in 1 until destinationRow.lastCellNum) {
+                val cell = destinationRow.getCell(cellIndex)
+                response.add(Station(id = 1, name = getCellValue(cell)))
+                // TODO: Need a database to save station IDs
+            }
+            response
         }
-        return response
     }
 
     override fun getAllRiderTypes(): Set<RiderType> {
-        val response = mutableSetOf<RiderType>()
-        val riderTypeColumn = getProductSheetColumn("rider type")
+        return withWorkbook { workbook ->
+            val productsSheet = workbook.getSheetAt(0)
 
-        if (riderTypeColumn == -1) return response
+            val response = mutableSetOf<RiderType>()
+            val riderTypeColumn = getProductSheetColumn(productsSheet,"rider type")
 
-        // Find matching rider type row (starting from row 2)
-        for (rowIndex in 2..productsSheet.lastRowNum) {
-            val row = productsSheet.getRow(rowIndex)
-            val riderTypeCell = row.getCell(riderTypeColumn)
-            val cellValue = getCellValue(riderTypeCell).uppercase()
-            val riderType = RiderType.entries.find { it.value.uppercase() == cellValue }
-            if (riderType == null) {
-                logger.error { "Unsupported rider type on the tariff: $cellValue" }
-                continue
+            if (riderTypeColumn == -1) return@withWorkbook response
+
+            // Find matching rider type row (starting from row 2)
+            for (rowIndex in 2..productsSheet.lastRowNum) {
+                val row = productsSheet.getRow(rowIndex)
+                val riderTypeCell = row.getCell(riderTypeColumn)
+                val cellValue = getCellValue(riderTypeCell).uppercase()
+                val riderType = RiderType.entries.find { it.value.uppercase() == cellValue }
+                if (riderType == null) {
+                    logger.error { "Unsupported rider type on the tariff: $cellValue" }
+                    continue
+                }
+                response.add(riderType)
             }
-            response.add(riderType)
+            response
         }
-        return response
     }
 
-    fun findSelectionKey(journeysSheet: Sheet, origin: String, destination: String): String? {
+    private fun findSelectionKey(journeysSheet: Sheet, origin: String, destination: String): String? {
+
         // Get destination row (row 1)
         val destinationRow = journeysSheet.getRow(1)
 
@@ -104,7 +121,7 @@ class ExcelFareTariffRepository : FareTariffPort {
                 break
             }
         }
-
+        // TODO: Remove magic numbers like the one below "-1" and just put an enum with that value and name it "NULL_COLUMN"
         if (destinationColumn == -1) return null
 
         // Find origin row (starting from row 2)
@@ -122,8 +139,8 @@ class ExcelFareTariffRepository : FareTariffPort {
     }
 
     private fun findProductInfo(productsSheet: Sheet, riderType: String): ProductInfo? {
-        val riderTypeColumn = getProductSheetColumn("rider type")
-        val discountColumn = getProductSheetColumn("discount")
+        val riderTypeColumn = getProductSheetColumn(productsSheet,"rider type")
+        val discountColumn = getProductSheetColumn(productsSheet,"discount")
 
         if (riderTypeColumn == -1 || discountColumn == -1) return null
 
@@ -177,17 +194,17 @@ class ExcelFareTariffRepository : FareTariffPort {
         return null
     }
 
-    private fun getProductSheetColumn(columnName: String): Int {
-        val headerRow = productsSheet.getRow(1) // Tab names are in row 1
+    private fun getProductSheetColumn(productsSheet: Sheet, columnName: String): Int {
+            val headerRow = productsSheet.getRow(1) // Tab names are in row 1
 
-        var columnIndex = -1
-        for (cellIndex in 0 until headerRow.lastCellNum) {
-            val cellValue = getCellValue(headerRow.getCell(cellIndex)).lowercase()
-            when {
-                cellValue.contains(columnName) -> columnIndex = cellIndex
+            var columnIndex = -1
+            for (cellIndex in 0 until headerRow.lastCellNum) {
+                val cellValue = getCellValue(headerRow.getCell(cellIndex)).lowercase()
+                when {
+                    cellValue.contains(columnName) -> columnIndex = cellIndex
+                }
             }
-        }
-        return columnIndex
+            return columnIndex
     }
 
     private fun getCellValue(cell: Cell?): String {
