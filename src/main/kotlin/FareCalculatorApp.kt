@@ -1,12 +1,12 @@
-package org.example
+package org.fare.calculator
 
 import com.github.michaelbull.result.fold
-import org.example.application.adapters.CalculateFareAdapter
-import org.example.application.handlers.CalculateFareHandler
-import org.example.application.ports.CalculateFarePort
-import org.example.application.ports.out.FareTariffPort
-import org.example.infrastructure.repositories.ExcelFareTariffRepository
-import org.example.utils.ui.FareRequestCommandLineUI
+import org.fare.calculator.application.adapters.CalculateFareAdapter
+import org.fare.calculator.application.handlers.CalculateFareHandler
+import org.fare.calculator.application.ports.CalculateFarePort
+import org.fare.calculator.application.ports.out.FareTariffPort
+import org.fare.calculator.infrastructure.repositories.ExcelFareTariffRepository
+import org.fare.calculator.utils.ui.FareRequestCommandLineUI
 
 fun main(args: Array<String>) {
     val fareAdapter: CalculateFarePort = CalculateFareAdapter()
@@ -25,5 +25,4 @@ fun main(args: Array<String>) {
     )
 }
 // TODO: Write more tests
-// TODO: Package name
 // TODO: High priority!! Every commit need a test and a documentation

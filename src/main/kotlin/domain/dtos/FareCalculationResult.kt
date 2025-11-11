@@ -1,6 +1,6 @@
-package org.example.domain.dtos
+package org.fare.calculator.domain.dtos
 
-import org.example.domain.models.Fare
+import org.fare.calculator.domain.models.Fare
 
 data class FareCalculationResult(
     val baseFare: Fare,

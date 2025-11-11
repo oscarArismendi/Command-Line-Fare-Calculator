@@ -1,4 +1,4 @@
-package org.example.domain.models
+package org.fare.calculator.domain.models
 
 enum class RiderType(val value: String) {
     ADULT("Adult"),

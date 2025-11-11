@@ -1,4 +1,4 @@
-package org.example.utils.error
+package org.fare.calculator.utils.error
 
 sealed class FareRepositoryErrors(message: String) : Exception(message) {
     class FareNotFound : FareRepositoryErrors("Fare couldn't be found")

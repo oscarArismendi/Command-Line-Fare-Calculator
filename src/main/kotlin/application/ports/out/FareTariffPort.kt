@@ -1,9 +1,9 @@
-package org.example.application.ports.out
+package org.fare.calculator.application.ports.out
 
-import org.example.domain.dtos.FareCalculationResult
-import org.example.domain.dtos.FareRequest
-import org.example.domain.models.RiderType
-import org.example.domain.models.Station
+import org.fare.calculator.domain.dtos.FareCalculationResult
+import org.fare.calculator.domain.dtos.FareRequest
+import org.fare.calculator.domain.models.RiderType
+import org.fare.calculator.domain.models.Station
 
 interface FareTariffPort {
     fun findFare(fareRequest: FareRequest): FareCalculationResult

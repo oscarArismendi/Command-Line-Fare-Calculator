@@ -4,7 +4,7 @@ plugins {
     application
 }
 
-group = "org.example"
+group = "org.fare.calculator"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -32,7 +32,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("org.example.FareCalculatorAppKt")
+    mainClass.set("org.fare.calculator.FareCalculatorAppKt")
 }
 
 allprojects {

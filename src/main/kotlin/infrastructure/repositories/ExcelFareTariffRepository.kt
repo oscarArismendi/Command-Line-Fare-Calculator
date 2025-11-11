@@ -1,4 +1,4 @@
-package org.example.infrastructure.repositories
+package org.fare.calculator.infrastructure.repositories
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.poi.ss.usermodel.Cell
@@ -6,12 +6,12 @@ import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.example.application.ports.out.FareTariffPort
-import org.example.domain.dtos.FareCalculationResult
-import org.example.domain.dtos.FareRequest
-import org.example.domain.models.Fare
-import org.example.domain.models.RiderType
-import org.example.domain.models.Station
+import org.fare.calculator.application.ports.out.FareTariffPort
+import org.fare.calculator.domain.dtos.FareCalculationResult
+import org.fare.calculator.domain.dtos.FareRequest
+import org.fare.calculator.domain.models.Fare
+import org.fare.calculator.domain.models.RiderType
+import org.fare.calculator.domain.models.Station
 import java.io.File
 import java.io.FileInputStream
 import java.math.BigDecimal

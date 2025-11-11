@@ -1,9 +1,9 @@
-package org.example.infrastructure
+package org.fare.calculator.infrastructure
 
-import org.example.domain.dtos.FareRequest
-import org.example.domain.models.RiderType
-import org.example.domain.models.Station
-import org.example.domain.models.Trip
+import org.fare.calculator.domain.dtos.FareRequest
+import org.fare.calculator.domain.models.RiderType
+import org.fare.calculator.domain.models.Station
+import org.fare.calculator.domain.models.Trip
 
 fun FareRequest.toTrip(): Trip {
     return Trip(

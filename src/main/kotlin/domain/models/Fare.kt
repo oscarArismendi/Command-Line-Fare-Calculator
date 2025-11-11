@@ -1,4 +1,4 @@
-package org.example.domain.models
+package org.fare.calculator.domain.models
 
 import java.math.BigDecimal
 

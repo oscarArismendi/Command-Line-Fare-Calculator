@@ -1,18 +1,18 @@
-package org.example.application.handlers
+package org.fare.calculator.application.handlers
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.example.application.ports.CalculateFarePort
-import org.example.application.ports.out.FareTariffPort
-import org.example.domain.dtos.FareCalculationResult
-import org.example.utils.error.FareRepositoryErrors
-import org.example.utils.error.FareRepositoryErrors.FareNotFound
-import org.example.utils.error.FareRepositoryErrors.InvalidJourneyError
-import org.example.utils.error.FareRepositoryErrors.InvalidStationError
-import org.example.utils.error.FareRepositoryErrors.InvalidTimeError
-import org.example.utils.error.FareRepositoryErrors.RiderTypeNotFoundError
-import org.example.utils.parseInput
+import org.fare.calculator.application.ports.CalculateFarePort
+import org.fare.calculator.application.ports.out.FareTariffPort
+import org.fare.calculator.domain.dtos.FareCalculationResult
+import org.fare.calculator.utils.error.FareRepositoryErrors
+import org.fare.calculator.utils.error.FareRepositoryErrors.FareNotFound
+import org.fare.calculator.utils.error.FareRepositoryErrors.InvalidJourneyError
+import org.fare.calculator.utils.error.FareRepositoryErrors.InvalidStationError
+import org.fare.calculator.utils.error.FareRepositoryErrors.InvalidTimeError
+import org.fare.calculator.utils.error.FareRepositoryErrors.RiderTypeNotFoundError
+import org.fare.calculator.utils.parseInput
 import java.time.LocalTime
 
 class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRepository: FareTariffPort) {

@@ -1,3 +1,3 @@
-package org.example.domain.models
+package org.fare.calculator.domain.models
 
 data class Station(val id: Long, val name: String)

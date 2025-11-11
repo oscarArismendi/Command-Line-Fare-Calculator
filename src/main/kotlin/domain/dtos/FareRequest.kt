@@ -1,4 +1,4 @@
-package org.example.domain.dtos
+package org.fare.calculator.domain.dtos
 
 import java.time.LocalTime
 

@@ -1,9 +1,9 @@
-package org.example.utils
+package org.fare.calculator.utils
 
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.required
-import org.example.domain.dtos.FareRequest
+import org.fare.calculator.domain.dtos.FareRequest
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException

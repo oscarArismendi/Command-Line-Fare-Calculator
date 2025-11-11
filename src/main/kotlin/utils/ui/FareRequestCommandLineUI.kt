@@ -1,6 +1,6 @@
-package org.example.utils.ui
+package org.fare.calculator.utils.ui
 
-import org.example.domain.dtos.FareCalculationResult
+import org.fare.calculator.domain.dtos.FareCalculationResult
 
 class FareRequestCommandLineUI(val fareCalculationResult: FareCalculationResult) {
     private val currency = fareCalculationResult.total.currency
