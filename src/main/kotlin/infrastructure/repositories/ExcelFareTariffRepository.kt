@@ -22,89 +22,83 @@ class ExcelFareTariffRepository : FareTariffPort {
 
     private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
 
-    fun <T> withWorkbook(operation: (Workbook) -> T): T{
-        return FileInputStream(file).use{ inputStream ->
-            XSSFWorkbook(inputStream).use{ workbook ->
-                operation(workbook)
-            }
+    fun <T> withWorkbook(operation: (Workbook) -> T): T = FileInputStream(file).use{ inputStream ->
+        XSSFWorkbook(inputStream).use{ workbook ->
+            operation(workbook)
         }
     }
 
-    override fun findFare(fareRequest: FareRequest): FareCalculationResult {
-        return withWorkbook { workbook ->
-            try {
-                val journeysSheet = workbook.getSheetAt(1)
-                val productsSheet = workbook.getSheetAt(0)
-                val fareSheet = workbook.getSheetAt(2)
+    // TODO: Implement cache for better performance(journeysSheet, fareSheet and productsSheet)
 
-                val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
-                if (selectionKey == null) {
-                    logger.error { "Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}" }
-                    throw IllegalArgumentException(
-                        "Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}",
-                    )
-                }
-
-                val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
-                if (productInfo == null) {
-                    logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
-                    throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
-                }
-
-                val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
-                if (totalFare == null) {
-                    logger.error { "Total fare not found for selection key: -> $selectionKey" }
-                    throw IllegalArgumentException(
-                        "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
-                    )
-                }
-                // TODO: Use the real currency
-                val baseFare = Fare(totalFare, "USD")
-                val discount = Fare(productInfo.discount, "USD")
-                FareCalculationResult(baseFare = baseFare, discount = discount)
-            } catch (e: IllegalArgumentException) {
-                throw e
-            }
-        }
-    }
-
-    override fun getAllStations(): Set<Station> {
-        return withWorkbook { workbook ->
+    override fun findFare(fareRequest: FareRequest): FareCalculationResult = withWorkbook { workbook ->
+        try {
             val journeysSheet = workbook.getSheetAt(1)
-            val response = mutableSetOf<Station>()
-            val destinationRow = journeysSheet.getRow(1)
-            for (cellIndex in 1 until destinationRow.lastCellNum) {
-                val cell = destinationRow.getCell(cellIndex)
-                response.add(Station(id = 1, name = getCellValue(cell)))
-                // TODO: Need a database to save station IDs
+            val productsSheet = workbook.getSheetAt(0)
+            val fareSheet = workbook.getSheetAt(2)
+
+            val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
+            if (selectionKey == null) {
+                logger.error { "Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}" }
+                throw IllegalArgumentException(
+                    "Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}",
+                )
             }
-            response
+
+            val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
+            if (productInfo == null) {
+                logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
+                throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
+            }
+
+            val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
+            if (totalFare == null) {
+                logger.error { "Total fare not found for selection key: -> $selectionKey" }
+                throw IllegalArgumentException(
+                    "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
+                )
+            }
+            // TODO: Use the real currency
+            val baseFare = Fare(totalFare, "USD")
+            val discount = Fare(productInfo.discount, "USD")
+            FareCalculationResult(baseFare = baseFare, discount = discount)
+        } catch (e: IllegalArgumentException) {
+            throw e
         }
     }
 
-    override fun getAllRiderTypes(): Set<RiderType> {
-        return withWorkbook { workbook ->
-            val productsSheet = workbook.getSheetAt(0)
-
-            val response = mutableSetOf<RiderType>()
-            val riderTypeColumn = getProductSheetColumn(productsSheet,"rider type")
-
-            if (riderTypeColumn == -1) return@withWorkbook response
-
-            // Find matching rider type row (starting from row 2)
-            for (rowIndex in 2..productsSheet.lastRowNum) {
-                val row = productsSheet.getRow(rowIndex)
-                val riderTypeCell = row.getCell(riderTypeColumn)
-                val cellValue = getCellValue(riderTypeCell).uppercase()
-                val riderType = RiderType.entries.find { it.value.uppercase() == cellValue }
-                if (riderType == null) {
-                    logger.error { "Unsupported rider type on the tariff: $cellValue" }
-                    continue
-                }
-                response.add(riderType)
-            }
-            response
+    override fun getAllStations(): Set<Station> = withWorkbook { workbook ->
+        val journeysSheet = workbook.getSheetAt(1)
+        val response = mutableSetOf<Station>()
+        val destinationRow = journeysSheet.getRow(1)
+        for (cellIndex in 1 until destinationRow.lastCellNum) {
+            val cell = destinationRow.getCell(cellIndex)
+            response.add(Station(id = 1, name = getCellValue(cell)))
+            // TODO: Need a database to save station IDs
         }
+        response
+    }
+
+    override fun getAllRiderTypes(): Set<RiderType> = withWorkbook { workbook ->
+        val productsSheet = workbook.getSheetAt(0)
+
+        val response = mutableSetOf<RiderType>()
+        val riderTypeColumn = getProductSheetColumn(productsSheet,"rider type")
+
+        if (riderTypeColumn == -1) return@withWorkbook response
+
+        // Find matching rider type row (starting from row 2)
+        for (rowIndex in 2..productsSheet.lastRowNum) {
+            val row = productsSheet.getRow(rowIndex)
+            val riderTypeCell = row.getCell(riderTypeColumn)
+            val cellValue = getCellValue(riderTypeCell).uppercase()
+            val riderType = RiderType.entries.find { it.value.uppercase() == cellValue }
+            if (riderType == null) {
+                logger.error { "Unsupported rider type on the tariff: $cellValue" }
+                continue
+            }
+            response.add(riderType)
+        }
+        response
     }
 
     private fun findSelectionKey(journeysSheet: Sheet, origin: String, destination: String): String? {

@@ -26,3 +26,4 @@ fun main(args: Array<String>) {
 }
 // TODO: Write more tests
 // TODO: Package name
+// TODO: High priority!! Every commit need a test and a documentation
