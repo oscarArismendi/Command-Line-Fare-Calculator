@@ -8,10 +8,10 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.fare.calculator.application.ports.out.FareTariffPort
 import org.fare.calculator.domain.dtos.FareCalculationResult
-import org.fare.calculator.domain.dtos.FareRequest
 import org.fare.calculator.domain.models.Fare
 import org.fare.calculator.domain.models.RiderType
 import org.fare.calculator.domain.models.Station
+import org.fare.calculator.domain.models.Trip
 import java.io.File
 import java.io.FileInputStream
 import java.math.BigDecimal
@@ -30,24 +30,24 @@ class ExcelFareTariffRepository : FareTariffPort {
 
     // TODO: Implement cache for better performance(journeysSheet, fareSheet and productsSheet)
 
-    override fun findFare(fareRequest: FareRequest): FareCalculationResult = withWorkbook { workbook ->
+    override fun findFare(trip: Trip): FareCalculationResult = withWorkbook { workbook ->
         try {
             val journeysSheet = workbook.getSheetAt(1)
             val productsSheet = workbook.getSheetAt(0)
             val fareSheet = workbook.getSheetAt(2)
 
-            val selectionKey = findSelectionKey(journeysSheet, fareRequest.origin, fareRequest.destination)
+            val selectionKey = findSelectionKey(journeysSheet, trip.origin.name, trip.destination.name)
             if (selectionKey == null) {
-                logger.error { "Journey not found in the tariff -> ${fareRequest.origin} to ${fareRequest.destination}" }
+                logger.error { "Journey not found in the tariff -> ${trip.origin.name} to ${trip.destination.name}" }
                 throw IllegalArgumentException(
-                    "Journey not found for origin: ${fareRequest.origin}, destination: ${fareRequest.destination}",
+                    "Journey not found for origin: ${trip.origin.name}, destination: ${trip.destination.name}",
                 )
             }
 
-            val productInfo = findProductInfo(productsSheet, fareRequest.riderType)
+            val productInfo = findProductInfo(productsSheet, trip.riderType.name)
             if (productInfo == null) {
-                logger.error { "Product not found in the tariff -> ${fareRequest.riderType}" }
-                throw IllegalArgumentException("Product not found for rider type: ${fareRequest.riderType}")
+                logger.error { "Product not found in the tariff -> ${trip.riderType.name}" }
+                throw IllegalArgumentException("Product not found for rider type: ${trip.riderType.name}")
             }
 
             val totalFare = findTotalFare(fareSheet, selectionKey, productInfo.reference)
@@ -143,7 +143,7 @@ class ExcelFareTariffRepository : FareTariffPort {
             val row = productsSheet.getRow(rowIndex)
             val riderTypeCell = row.getCell(riderTypeColumn)
 
-            if (getCellValue(riderTypeCell) == riderType) {
+            if (getCellValue(riderTypeCell).uppercase() == riderType.uppercase()) {
                 val referenceCell = row.getCell(0)
                 val discountCell = row.getCell(discountColumn)
 

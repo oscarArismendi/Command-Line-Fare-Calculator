@@ -8,6 +8,7 @@ import org.fare.calculator.application.ports.CalculateFarePort
 import org.fare.calculator.application.ports.out.FareTariffPort
 import org.fare.calculator.domain.dtos.FareCalculationResult
 import org.fare.calculator.domain.dtos.FareRequest
+import org.fare.calculator.infrastructure.toTrip
 import org.fare.calculator.utils.error.FareRepositoryErrors
 import org.fare.calculator.utils.error.FareRepositoryErrors.FareNotFound
 import org.fare.calculator.utils.error.FareRepositoryErrors.InvalidJourneyError
@@ -23,22 +24,23 @@ class CalculateFareAdapter : CalculateFarePort {
         fareTariffRepository: FareTariffPort,
     ): Result<FareCalculationResult, FareRepositoryErrors> {
         try {
+            val trip = fareRequest.toTrip()
             val validStations = fareTariffRepository.getAllStations()
 
-            if (!validStations.any { fareRequest.origin == it.name }) {
-                throw InvalidStationError(fareRequest.origin)
+            if (!validStations.any { trip.origin.name == it.name }) {
+                throw InvalidStationError(trip.origin.name)
             }
 
-            if (!validStations.any { it.name == fareRequest.destination }) {
-                throw InvalidStationError(fareRequest.destination)
+            if (!validStations.any { it.name == trip.destination.name }) {
+                throw InvalidStationError(trip.destination.name)
             }
             val validRiderTypes = fareTariffRepository.getAllRiderTypes()
 
-            if (!validRiderTypes.any { it.value.uppercase() == fareRequest.riderType.uppercase() }) {
-                throw RiderTypeNotFoundError(fareRequest.riderType)
+            if (!validRiderTypes.any { it.value.uppercase() == trip.riderType.name.uppercase() }) {
+                throw RiderTypeNotFoundError(trip.riderType.name.uppercase())
             }
 
-            return Ok(fareTariffRepository.findFare(fareRequest))
+            return Ok(fareTariffRepository.findFare(trip))
         } catch (e: FareRepositoryErrors) {
             when (e) {
                 is FareNotFound -> {

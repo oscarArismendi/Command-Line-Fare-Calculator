@@ -13,4 +13,3 @@ fun FareRequest.toTrip(): Trip {
         riderType = RiderType.valueOf(this.riderType.uppercase()),
     )
 }
-// TODO: Implement to trip method
