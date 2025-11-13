@@ -16,10 +16,19 @@ import java.io.File
 import java.io.FileInputStream
 import java.math.BigDecimal
 
+// Question: A constant should be in other class? or since this is only used within this class, it should remain here?
+private const val NULL_COLUMN = -1
+
+private const val FIRST_DATA_ROW = 2
+
+private const val JOURNEY_SHEET_NUMBER = 1
+private const val FARE_SHEET_NUMBER = 2
+private const val PRODUCT_SHEET_NUMBER = 0
+
 class ExcelFareTariffRepository : FareTariffPort {
 
     private val logger = KotlinLogging.logger {}
-
+    // TODO: Excel repository should be able to find the latest version
     private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
 
     fun <T> withWorkbook(operation: (Workbook) -> T): T = FileInputStream(file).use{ inputStream ->
@@ -32,9 +41,9 @@ class ExcelFareTariffRepository : FareTariffPort {
 
     override fun findFare(trip: Trip): FareCalculationResult = withWorkbook { workbook ->
         try {
-            val journeysSheet = workbook.getSheetAt(1)
-            val productsSheet = workbook.getSheetAt(0)
-            val fareSheet = workbook.getSheetAt(2)
+            val journeysSheet = workbook.getSheetAt(JOURNEY_SHEET_NUMBER)
+            val productsSheet = workbook.getSheetAt(PRODUCT_SHEET_NUMBER)
+            val fareSheet = workbook.getSheetAt(FARE_SHEET_NUMBER)
 
             val selectionKey = findSelectionKey(journeysSheet, trip.origin.name, trip.destination.name)
             if (selectionKey == null) {
@@ -67,7 +76,7 @@ class ExcelFareTariffRepository : FareTariffPort {
     }
 
     override fun getAllStations(): Set<Station> = withWorkbook { workbook ->
-        val journeysSheet = workbook.getSheetAt(1)
+        val journeysSheet = workbook.getSheetAt(JOURNEY_SHEET_NUMBER)
         val response = mutableSetOf<Station>()
         val destinationRow = journeysSheet.getRow(1)
         for (cellIndex in 1 until destinationRow.lastCellNum) {
@@ -79,15 +88,15 @@ class ExcelFareTariffRepository : FareTariffPort {
     }
 
     override fun getAllRiderTypes(): Set<RiderType> = withWorkbook { workbook ->
-        val productsSheet = workbook.getSheetAt(0)
+        val productsSheet = workbook.getSheetAt(PRODUCT_SHEET_NUMBER)
 
         val response = mutableSetOf<RiderType>()
         val riderTypeColumn = getProductSheetColumn(productsSheet,"rider type")
 
-        if (riderTypeColumn == -1) return@withWorkbook response
+        if (riderTypeColumn == NULL_COLUMN) return@withWorkbook response
 
         // Find matching rider type row (starting from row 2)
-        for (rowIndex in 2..productsSheet.lastRowNum) {
+        for (rowIndex in FIRST_DATA_ROW..productsSheet.lastRowNum) {
             val row = productsSheet.getRow(rowIndex)
             val riderTypeCell = row.getCell(riderTypeColumn)
             val cellValue = getCellValue(riderTypeCell).uppercase()
@@ -107,7 +116,7 @@ class ExcelFareTariffRepository : FareTariffPort {
         val destinationRow = journeysSheet.getRow(1)
 
         // Find destination column
-        var destinationColumn = -1
+        var destinationColumn = NULL_COLUMN
         for (cellIndex in 1 until destinationRow.lastCellNum) {
             val cell = destinationRow.getCell(cellIndex)
             if (getCellValue(cell) == destination) {
@@ -115,11 +124,10 @@ class ExcelFareTariffRepository : FareTariffPort {
                 break
             }
         }
-        // TODO: Remove magic numbers like the one below "-1" and just put an enum with that value and name it "NULL_COLUMN"
-        if (destinationColumn == -1) return null
+        if (destinationColumn == NULL_COLUMN) return null
 
         // Find origin row (starting from row 2)
-        for (rowIndex in 2..journeysSheet.lastRowNum) {
+        for (rowIndex in FIRST_DATA_ROW..journeysSheet.lastRowNum) {
             val row = journeysSheet.getRow(rowIndex)
             val originCell = row.getCell(0)
             if (getCellValue(originCell) == origin) {
@@ -136,10 +144,10 @@ class ExcelFareTariffRepository : FareTariffPort {
         val riderTypeColumn = getProductSheetColumn(productsSheet,"rider type")
         val discountColumn = getProductSheetColumn(productsSheet,"discount")
 
-        if (riderTypeColumn == -1 || discountColumn == -1) return null
+        if (riderTypeColumn == NULL_COLUMN || discountColumn == NULL_COLUMN) return null
 
         // Find matching rider type row (starting from row 2)
-        for (rowIndex in 2..productsSheet.lastRowNum) {
+        for (rowIndex in FIRST_DATA_ROW..productsSheet.lastRowNum) {
             val row = productsSheet.getRow(rowIndex)
             val riderTypeCell = row.getCell(riderTypeColumn)
 
@@ -161,7 +169,7 @@ class ExcelFareTariffRepository : FareTariffPort {
         val headerRow = fareSheet.getRow(1) // The Second row contains product references
 
         // Find product reference column
-        var productColumn = -1
+        var productColumn = NULL_COLUMN
         for (cellIndex in 1 until headerRow.lastCellNum) {
             val cell = headerRow.getCell(cellIndex)
             if (getCellValue(cell) == productReference) {
@@ -170,10 +178,10 @@ class ExcelFareTariffRepository : FareTariffPort {
             }
         }
 
-        if (productColumn == -1) return null
+        if (productColumn == NULL_COLUMN) return null
 
         // Find selection key row (starting from row 2)
-        for (rowIndex in 2..fareSheet.lastRowNum) {
+        for (rowIndex in FIRST_DATA_ROW..fareSheet.lastRowNum) {
             val row = fareSheet.getRow(rowIndex)
             val selectionKeyCell = row.getCell(0)
 
@@ -191,7 +199,7 @@ class ExcelFareTariffRepository : FareTariffPort {
     private fun getProductSheetColumn(productsSheet: Sheet, columnName: String): Int {
             val headerRow = productsSheet.getRow(1) // Tab names are in row 1
 
-            var columnIndex = -1
+            var columnIndex = NULL_COLUMN
             for (cellIndex in 0 until headerRow.lastCellNum) {
                 val cellValue = getCellValue(headerRow.getCell(cellIndex)).lowercase()
                 when {

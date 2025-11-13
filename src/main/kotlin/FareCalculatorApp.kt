@@ -24,5 +24,3 @@ fun main(args: Array<String>) {
         failure = { println("Couldn't complete the request") },
     )
 }
-// TODO: Write more tests
-// TODO: High priority!! Every commit need a test and a documentation
