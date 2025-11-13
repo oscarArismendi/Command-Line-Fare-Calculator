@@ -24,6 +24,12 @@ class CalculateFareAdapter : CalculateFarePort {
         fareTariffRepository: FareTariffPort,
     ): Result<FareCalculationResult, FareRepositoryErrors> {
         try {
+            val validRiderTypes = fareTariffRepository.getAllRiderTypes()
+
+            if (!validRiderTypes.any { it.value.uppercase() == fareRequest.riderType.uppercase() }) {
+                throw RiderTypeNotFoundError(fareRequest.riderType.uppercase())
+            }
+
             val trip = fareRequest.toTrip()
             val validStations = fareTariffRepository.getAllStations()
 
@@ -34,11 +40,6 @@ class CalculateFareAdapter : CalculateFarePort {
             if (!validStations.any { it.name == trip.destination.name }) {
                 throw InvalidStationError(trip.destination.name)
             }
-            val validRiderTypes = fareTariffRepository.getAllRiderTypes()
-
-            if (!validRiderTypes.any { it.value.uppercase() == trip.riderType.name.uppercase() }) {
-                throw RiderTypeNotFoundError(trip.riderType.name.uppercase())
-            }
 
             return Ok(fareTariffRepository.findFare(trip))
         } catch (e: FareRepositoryErrors) {
@@ -47,7 +48,7 @@ class CalculateFareAdapter : CalculateFarePort {
                     logger.error { "Fare not found in the tariff -> ${e.message}" }
                 }
                 is InvalidStationError -> {
-                    logger.error { "Tariff not found in the tariff -> ${e.message}" }
+                    logger.error { "Station not found in the tariff -> ${e.message}" }
                 }
                 is RiderTypeNotFoundError -> {
                     logger.error { "Rider Type not found in the tariff -> ${e.message}" }

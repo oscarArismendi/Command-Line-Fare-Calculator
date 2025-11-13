@@ -10,7 +10,7 @@ import java.time.format.DateTimeParseException
 
 fun parseInput(args: Array<String>): FareRequest {
     val parser = ArgParser("fare-calculator")
-
+    println(args.contentToString())
     val from by parser.option(
         ArgType.String,
         shortName = "f",

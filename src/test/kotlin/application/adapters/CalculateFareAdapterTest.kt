@@ -1,6 +1,7 @@
 package application.adapters
 
 import com.github.michaelbull.result.get
+import com.github.michaelbull.result.getError
 import io.kotest.matchers.shouldBe
 import org.fare.calculator.application.adapters.CalculateFareAdapter
 import org.fare.calculator.domain.dtos.FareRequest
@@ -8,28 +9,112 @@ import org.fare.calculator.infrastructure.repositories.ExcelFareTariffRepository
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
+private const val FARE_ONE_STOP_ADULT = 10.0
+
+private const val FARE_ONE_STOP_CHILD = 8.0
+
+private const val FARE_TWO_STOPS_ADULT = 20.0
+
+private const val FARE_THREE_STOPS_ADULT = 30.0
+
 class CalculateFareAdapterTest {
 
     val excelFareTariffRepository = ExcelFareTariffRepository()
+    val calculateFareAdapter = CalculateFareAdapter()
 
+
+    //Happy path tests
     @Test
     fun `calculate Fare returns a big decimal`() {
         // Given
-        val calculateFareAdapter = CalculateFareAdapter()
         val dummyFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Adult")
-
         // When
         val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
         // Then
-        result.get()!!.total.amount shouldBe BigDecimal.valueOf(10.0)
+        result.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
     }
 
     @Test
-    fun `test A`() {
-        // Given rider have RiderType is "Child"
+    fun `calculates discounted fares for Child and Senior rider types`() {
+        // Given
+        val dummyChildFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Child")
+        val dummySeniorFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Senior")
+        // When
+        val childResult = calculateFareAdapter.calculateFare(dummyChildFareRequest, excelFareTariffRepository)
+        val seniorResult = calculateFareAdapter.calculateFare(dummySeniorFareRequest, excelFareTariffRepository)
+        // Then
+        childResult.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_CHILD)
+        seniorResult.get()!!.total.amount shouldBe BigDecimal.valueOf(6.0)
+    }
 
-        // When the fare is calculated
+    @Test
+    fun `calculates correct fares for different station combinations`() {
+        // Given
+        val dummyAtoBFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Adult")
+        val dummyAtoCFareRequest = FareRequest(origin = "A", destination = "C", riderType = "Adult")
+        val dummyAtoDFareRequest = FareRequest(origin = "A", destination = "D", riderType = "Adult")
+        val dummyBtoCFareRequest = FareRequest(origin = "B", destination = "C", riderType = "Adult")
+        val dummyBtoDFareRequest = FareRequest(origin = "B", destination = "D", riderType = "Adult")
+        val dummyCtoDFareRequest = FareRequest(origin = "C", destination = "D", riderType = "Adult")
+        // When
+        val resultAToB = calculateFareAdapter.calculateFare(dummyAtoBFareRequest, excelFareTariffRepository)
+        val resultAtoC = calculateFareAdapter.calculateFare(dummyAtoCFareRequest, excelFareTariffRepository)
+        val resultAToD = calculateFareAdapter.calculateFare(dummyAtoDFareRequest, excelFareTariffRepository)
+        val resultBtoC = calculateFareAdapter.calculateFare(dummyBtoCFareRequest, excelFareTariffRepository)
+        val resultBToD = calculateFareAdapter.calculateFare(dummyBtoDFareRequest, excelFareTariffRepository)
+        val resultCtoD = calculateFareAdapter.calculateFare(dummyCtoDFareRequest, excelFareTariffRepository)
+        // Then
+        resultAToB.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
+        resultAtoC.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_TWO_STOPS_ADULT)
+        resultAToD.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_THREE_STOPS_ADULT)
+        resultBtoC.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
+        resultBToD.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_TWO_STOPS_ADULT)
+        resultCtoD.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
+    }
+    @Test
+    fun `handles rider type case insensitively`() {
+        // Given
+        val dummyFareRequest = FareRequest(origin = "A", destination = "B", riderType = "aDuLt")
+        // When
+        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        // Then
+        result.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
+    }
 
-        // Then the fare should be 8
+    // Error path
+    @Test
+    fun `returns InvalidStationError when origin station is not in tariff`() {
+        // Given
+        val dummyFareRequest = FareRequest(origin = "Invalid origin station", destination = "B", riderType = "Adult")
+        // When
+        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        // Then
+        result.isErr shouldBe true
+        val error = result.getError()!!
+        error.message shouldBe "Invalid station provided: Invalid origin station"
+    }
+
+    @Test
+    fun `returns InvalidStationError when destination station is not in tariff`() {
+        // Given
+        val dummyFareRequest = FareRequest(origin = "A", destination = "Invalid destination station", riderType = "Adult")
+        // When
+        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        // Then
+        result.isErr shouldBe true
+        val error = result.getError()!!
+        error.message shouldBe "Invalid station provided: Invalid destination station"
+    }
+
+    @Test
+    fun `returns RiderTypeNotFoundError when rider type is not in tariff`() {
+        // Given
+        val dummyFareRequest = FareRequest(origin = "A", destination = "B", riderType = "dummy riderType")
+        // When
+        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        // Then
+        result.isErr shouldBe true
+        val error = result.getError()!!
+        error.message shouldBe "Rider type not found: DUMMY RIDERTYPE"
     }
 }

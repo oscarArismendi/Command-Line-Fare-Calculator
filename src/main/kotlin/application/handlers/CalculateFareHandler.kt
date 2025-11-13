@@ -32,7 +32,7 @@ class CalculateFareHandler(val fareService: CalculateFarePort, val fareTariffRep
             ) {
                 println(fareRequest.timeStamp)
                 println(LocalTime.now().minusMinutes(5))
-                throw InvalidTimeError("Cannot book travel in the past")
+                throw InvalidTimeError("It is not possible to book a trip in the past")
             }
 
             return fareService.calculateFare(fareRequest, fareTariffRepository)
