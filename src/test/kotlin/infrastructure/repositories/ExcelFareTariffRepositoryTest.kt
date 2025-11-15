@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
+import org.fare.calculator.domain.models.Fare
 import org.fare.calculator.domain.models.RiderType
 import org.fare.calculator.domain.models.Station
 import org.fare.calculator.domain.models.Trip
@@ -76,6 +77,20 @@ class ExcelFareTariffRepositoryTest {
         result.baseFare.amount shouldBe BigDecimal.valueOf(BASE_FARE_ONE_STOP)
         result.discount.amount shouldBe BigDecimal.valueOf(4.0) // 40% of 10
         result.total.amount shouldBe BigDecimal.valueOf(6.0)
+    }
+
+    @Test
+    fun `findFare calculates correctly the currency`() {
+        // Given
+        val trip = createTrip(origin = STATION_A, destination = STATION_D, riderType = RiderType.ADULT)
+        val expectedCurrency = "USD"
+        // When
+        val result = repository.findFare(trip)
+
+        // Then
+        result.baseFare.currency shouldBe expectedCurrency
+        result.discount.currency shouldBe expectedCurrency
+        result.total.currency shouldBe expectedCurrency
     }
 
     @Test
@@ -159,15 +174,12 @@ class ExcelFareTariffRepositoryTest {
         val lowerCaseStation = Station(0, "a")
         val trip = createTrip(origin = lowerCaseStation, destination = STATION_B)
 
-        // When - This might fail depending on your implementation
-        // If it should work, test it; if not, document the behavior
+        // when & then
         val exception = shouldThrow<IllegalArgumentException> {
             repository.findFare(trip)
         }
 
-        // Or if it should work:
-        // val result = repository.findFare(trip)
-        // result shouldNotBe null
+        exception.message shouldBe "Journey not found for origin: ${lowerCaseStation.name}, destination: ${STATION_B.name}"
     }
 
     // Edge Cases

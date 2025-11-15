@@ -22,13 +22,17 @@ private const val NULL_COLUMN = -1
 private const val FIRST_DATA_ROW = 2
 
 private const val JOURNEY_SHEET_NUMBER = 1
+
 private const val FARE_SHEET_NUMBER = 2
+private const val CURRENCY_ROW_NUMBER = 1
+private const val CURRENCY_COLUMN_NUMBER = 0
+
 private const val PRODUCT_SHEET_NUMBER = 0
 
 class ExcelFareTariffRepository : FareTariffPort {
-
+    private val currency = findCurrency()
     private val logger = KotlinLogging.logger {}
-    // TODO: Excel repository should be able to find the latest version
+    // TODO: Excel repository should be able to find the latest version (5 story points)
     private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
 
     fun <T> withWorkbook(operation: (Workbook) -> T): T = FileInputStream(file).use{ inputStream ->
@@ -37,7 +41,7 @@ class ExcelFareTariffRepository : FareTariffPort {
         }
     }
 
-    // TODO: Implement cache for better performance(journeysSheet, fareSheet and productsSheet)
+    // TODO: Implement cache for better performance(journeysSheet, fareSheet and productsSheet) (8 story points)
 
     override fun findFare(trip: Trip): FareCalculationResult = withWorkbook { workbook ->
         try {
@@ -66,9 +70,16 @@ class ExcelFareTariffRepository : FareTariffPort {
                     "Total fare not found for selection key: $selectionKey, product reference: ${productInfo.reference}",
                 )
             }
-            // TODO: Use the real currency
-            val baseFare = Fare(totalFare, "USD")
-            val discount = Fare(productInfo.discount, "USD")
+
+            if (currency == "") {
+                logger.error { "Currency cell is empty in the fare sheet" }
+                throw IllegalArgumentException(
+                    "Currency has not been configured",
+                )
+            }
+
+            val baseFare = Fare(totalFare, currency)
+            val discount = Fare(productInfo.discount, currency)
             FareCalculationResult(baseFare = baseFare, discount = discount)
         } catch (e: IllegalArgumentException) {
             throw e
@@ -82,7 +93,7 @@ class ExcelFareTariffRepository : FareTariffPort {
         for (cellIndex in 1 until destinationRow.lastCellNum) {
             val cell = destinationRow.getCell(cellIndex)
             response.add(Station(id = 1, name = getCellValue(cell)))
-            // TODO: Need a database to save station IDs
+            // TODO: Need a database to save station IDs (8 story points)
         }
         response
     }
@@ -108,6 +119,13 @@ class ExcelFareTariffRepository : FareTariffPort {
             response.add(riderType)
         }
         response
+    }
+
+    override fun findCurrency(): String = withWorkbook{ workbook ->
+        val fareSheet = workbook.getSheetAt(FARE_SHEET_NUMBER)
+        val currencyRow = fareSheet.getRow(CURRENCY_ROW_NUMBER)
+        val currencyCell = currencyRow.getCell(CURRENCY_COLUMN_NUMBER)
+        getCellValue(currencyCell)
     }
 
     private fun findSelectionKey(journeysSheet: Sheet, origin: String, destination: String): String? {

@@ -9,4 +9,5 @@ interface FareTariffPort {
     fun findFare(trip: Trip): FareCalculationResult
     fun getAllStations(): Set<Station>
     fun getAllRiderTypes(): Set<RiderType>
+    fun findCurrency(): String
 }
