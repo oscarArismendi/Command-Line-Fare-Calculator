@@ -30,10 +30,10 @@ private const val CURRENCY_COLUMN_NUMBER = 0
 private const val PRODUCT_SHEET_NUMBER = 0
 
 class ExcelFareTariffRepository : FareTariffPort {
-    private val currency = findCurrency()
     private val logger = KotlinLogging.logger {}
     // TODO: Excel repository should be able to find the latest version (5 story points)
     private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
+    private val currency = findCurrency()
 
     fun <T> withWorkbook(operation: (Workbook) -> T): T = FileInputStream(file).use{ inputStream ->
         XSSFWorkbook(inputStream).use{ workbook ->
@@ -93,7 +93,7 @@ class ExcelFareTariffRepository : FareTariffPort {
         for (cellIndex in 1 until destinationRow.lastCellNum) {
             val cell = destinationRow.getCell(cellIndex)
             response.add(Station(id = 1, name = getCellValue(cell)))
-            // TODO: Need a database to save station IDs (8 story points)
+            // TODO: Need a database to save station IDs (Would be implemented on the 4 phase)
         }
         response
     }
