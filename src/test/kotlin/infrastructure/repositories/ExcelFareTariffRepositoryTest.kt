@@ -6,7 +6,6 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
-import org.fare.calculator.domain.models.Fare
 import org.fare.calculator.domain.models.RiderType
 import org.fare.calculator.domain.models.Station
 import org.fare.calculator.domain.models.Trip

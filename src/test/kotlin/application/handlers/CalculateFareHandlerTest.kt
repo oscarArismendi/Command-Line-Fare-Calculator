@@ -2,6 +2,7 @@ package application.handlers
 
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.fare.calculator.application.adapters.CalculateFareAdapter
 import org.fare.calculator.application.handlers.CalculateFareHandler
@@ -17,7 +18,7 @@ private const val TIME_THRESHOLD_MINUTES = 6L
 private const val FARE_ONE_STOP_ADULT = 10.0
 
 class CalculateFareHandlerTest {
-
+    // TODO: Use test doubles and stubs (5 story points)
     val excelFareTariffRepository = ExcelFareTariffRepository()
     val calculateFareAdapter = CalculateFareAdapter()
     val calculateFareHandler = CalculateFareHandler( calculateFareAdapter, excelFareTariffRepository)
@@ -34,7 +35,9 @@ class CalculateFareHandlerTest {
         // When
         val result = calculateFareHandler.handleFareCalculation(dummyArgs)
         // Then
-        result.get()!!.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
+        result.isOk shouldBe true
+        val fare = result.get().shouldNotBeNull()
+        fare.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
     }
 
     // Error path
@@ -50,7 +53,7 @@ class CalculateFareHandlerTest {
         val result = calculateFareHandler.handleFareCalculation(dummyArgs)
         // Then
         result.isErr shouldBe true
-        val error = result.getError()!!
+        val error = result.getError().shouldNotBeNull()
         error.message shouldBe "Origin and destination cannot be the same"
     }
 
@@ -69,7 +72,7 @@ class CalculateFareHandlerTest {
         val result = calculateFareHandler.handleFareCalculation(dummyArgs)
         // Then
         result.isErr shouldBe true
-        val error = result.getError()!!
+        val error = result.getError().shouldNotBeNull()
         error.message shouldBe "It is not possible to book a trip in the past"
     }
 
