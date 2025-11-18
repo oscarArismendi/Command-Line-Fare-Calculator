@@ -2,11 +2,11 @@ package application.handlers
 
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
+import fakes.FakeCalculateFareAdapter
+import fakes.FakeFareTariffRepository
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import org.fare.calculator.application.adapters.CalculateFareAdapter
 import org.fare.calculator.application.handlers.CalculateFareHandler
-import org.fare.calculator.infrastructure.repositories.ExcelFareTariffRepository
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalTime
@@ -18,22 +18,21 @@ private const val TIME_THRESHOLD_MINUTES = 6L
 private const val FARE_ONE_STOP_ADULT = 10.0
 
 class CalculateFareHandlerTest {
-    // TODO: Use test doubles and stubs (5 story points)
-    val excelFareTariffRepository = ExcelFareTariffRepository()
-    val calculateFareAdapter = CalculateFareAdapter()
-    val calculateFareHandler = CalculateFareHandler( calculateFareAdapter, excelFareTariffRepository)
+    val fakeFareTariffRepository = FakeFareTariffRepository()
+    val fakeCalculateFareAdapter = FakeCalculateFareAdapter()
+    val calculateFareHandler = CalculateFareHandler( fakeCalculateFareAdapter, fakeFareTariffRepository)
 
     //happy path
     @Test
     fun `successfully handles valid fare request and returns calculated fare`() {
         // Given
-        val dummyArgs = arrayOf(
+        val fareRequestArgs = arrayOf(
             "--from", "A",
             "--to", "B",
             "--type","Adult"
         )
         // When
-        val result = calculateFareHandler.handleFareCalculation(dummyArgs)
+        val result = calculateFareHandler.handleFareCalculation(fareRequestArgs)
         // Then
         result.isOk shouldBe true
         val fare = result.get().shouldNotBeNull()
@@ -44,13 +43,13 @@ class CalculateFareHandlerTest {
     @Test
     fun `returns InvalidJourneyError when origin and destination are the same`() {
         // Given
-        val dummyArgs = arrayOf(
+        val fareRequestArgs = arrayOf(
             "--from", "A",
             "--to", "A",
             "--type","Adult"
         )
         // When
-        val result = calculateFareHandler.handleFareCalculation(dummyArgs)
+        val result = calculateFareHandler.handleFareCalculation(fareRequestArgs)
         // Then
         result.isErr shouldBe true
         val error = result.getError().shouldNotBeNull()
@@ -62,14 +61,14 @@ class CalculateFareHandlerTest {
         // Given
         val timeFormat= DateTimeFormatter.ofPattern("HH:mm")
         val fareRequestTimeStamp = LocalTime.now().minusMinutes(TIME_THRESHOLD_MINUTES).format(timeFormat)
-        val dummyArgs = arrayOf(
+        val fareRequestArgs = arrayOf(
             "--from", "A",
             "--to", "B",
             "--type","Adult",
             "--time", fareRequestTimeStamp
         )
         // When
-        val result = calculateFareHandler.handleFareCalculation(dummyArgs)
+        val result = calculateFareHandler.handleFareCalculation(fareRequestArgs)
         // Then
         result.isErr shouldBe true
         val error = result.getError().shouldNotBeNull()

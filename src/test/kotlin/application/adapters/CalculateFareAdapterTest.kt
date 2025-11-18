@@ -2,11 +2,11 @@ package application.adapters
 
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
+import fakes.FakeFareTariffRepository
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.fare.calculator.application.adapters.CalculateFareAdapter
 import org.fare.calculator.domain.dtos.FareRequest
-import org.fare.calculator.infrastructure.repositories.ExcelFareTariffRepository
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
@@ -20,7 +20,7 @@ private const val FARE_THREE_STOPS_ADULT = 30.0
 
 class CalculateFareAdapterTest {
 
-    val excelFareTariffRepository = ExcelFareTariffRepository()
+    val excelFareTariffRepository = FakeFareTariffRepository()
     val calculateFareAdapter = CalculateFareAdapter()
 
 
@@ -28,9 +28,9 @@ class CalculateFareAdapterTest {
     @Test
     fun `calculate Fare returns a big decimal`() {
         // Given
-        val dummyFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Adult")
+        val fareRequestArgs = FareRequest(origin = "A", destination = "B", riderType = "Adult")
         // When
-        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        val result = calculateFareAdapter.calculateFare(fareRequestArgs, excelFareTariffRepository)
         // Then
         val fare = result.get().shouldNotBeNull()
         fare.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
@@ -39,11 +39,11 @@ class CalculateFareAdapterTest {
     @Test
     fun `calculates discounted fares for Child and Senior rider types`() {
         // Given
-        val dummyChildFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Child")
-        val dummySeniorFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Senior")
+        val childFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Child")
+        val seniorFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Senior")
         // When
-        val childResult = calculateFareAdapter.calculateFare(dummyChildFareRequest, excelFareTariffRepository)
-        val seniorResult = calculateFareAdapter.calculateFare(dummySeniorFareRequest, excelFareTariffRepository)
+        val childResult = calculateFareAdapter.calculateFare(childFareRequest, excelFareTariffRepository)
+        val seniorResult = calculateFareAdapter.calculateFare(seniorFareRequest, excelFareTariffRepository)
         // Then
         val childFare = childResult.get().shouldNotBeNull()
         val seniorFare = seniorResult.get().shouldNotBeNull()
@@ -54,19 +54,19 @@ class CalculateFareAdapterTest {
     @Test
     fun `calculates correct fares for different station combinations`() {
         // Given
-        val dummyAtoBFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Adult")
-        val dummyAtoCFareRequest = FareRequest(origin = "A", destination = "C", riderType = "Adult")
-        val dummyAtoDFareRequest = FareRequest(origin = "A", destination = "D", riderType = "Adult")
-        val dummyBtoCFareRequest = FareRequest(origin = "B", destination = "C", riderType = "Adult")
-        val dummyBtoDFareRequest = FareRequest(origin = "B", destination = "D", riderType = "Adult")
-        val dummyCtoDFareRequest = FareRequest(origin = "C", destination = "D", riderType = "Adult")
+        val atoBFareRequest = FareRequest(origin = "A", destination = "B", riderType = "Adult")
+        val atoCFareRequest = FareRequest(origin = "A", destination = "C", riderType = "Adult")
+        val atoDFareRequest = FareRequest(origin = "A", destination = "D", riderType = "Adult")
+        val btoCFareRequest = FareRequest(origin = "B", destination = "C", riderType = "Adult")
+        val btoDFareRequest = FareRequest(origin = "B", destination = "D", riderType = "Adult")
+        val ctoDFareRequest = FareRequest(origin = "C", destination = "D", riderType = "Adult")
         // When
-        val resultAToB = calculateFareAdapter.calculateFare(dummyAtoBFareRequest, excelFareTariffRepository)
-        val resultAtoC = calculateFareAdapter.calculateFare(dummyAtoCFareRequest, excelFareTariffRepository)
-        val resultAToD = calculateFareAdapter.calculateFare(dummyAtoDFareRequest, excelFareTariffRepository)
-        val resultBtoC = calculateFareAdapter.calculateFare(dummyBtoCFareRequest, excelFareTariffRepository)
-        val resultBToD = calculateFareAdapter.calculateFare(dummyBtoDFareRequest, excelFareTariffRepository)
-        val resultCtoD = calculateFareAdapter.calculateFare(dummyCtoDFareRequest, excelFareTariffRepository)
+        val resultAToB = calculateFareAdapter.calculateFare(atoBFareRequest, excelFareTariffRepository)
+        val resultAtoC = calculateFareAdapter.calculateFare(atoCFareRequest, excelFareTariffRepository)
+        val resultAToD = calculateFareAdapter.calculateFare(atoDFareRequest, excelFareTariffRepository)
+        val resultBtoC = calculateFareAdapter.calculateFare(btoCFareRequest, excelFareTariffRepository)
+        val resultBToD = calculateFareAdapter.calculateFare(btoDFareRequest, excelFareTariffRepository)
+        val resultCtoD = calculateFareAdapter.calculateFare(ctoDFareRequest, excelFareTariffRepository)
         // Then
         val fareAToB = resultAToB.get().shouldNotBeNull()
         val fareAtoC = resultAtoC.get().shouldNotBeNull()
@@ -84,9 +84,9 @@ class CalculateFareAdapterTest {
     @Test
     fun `handles rider type case insensitively`() {
         // Given
-        val dummyFareRequest = FareRequest(origin = "A", destination = "B", riderType = "aDuLt")
+        val fareRequestArgs = FareRequest(origin = "A", destination = "B", riderType = "aDuLt")
         // When
-        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        val result = calculateFareAdapter.calculateFare(fareRequestArgs, excelFareTariffRepository)
         // Then
         val fare = result.get().shouldNotBeNull()
         fare.total.amount shouldBe BigDecimal.valueOf(FARE_ONE_STOP_ADULT)
@@ -96,9 +96,9 @@ class CalculateFareAdapterTest {
     @Test
     fun `returns InvalidStationError when origin station is not in tariff`() {
         // Given
-        val dummyFareRequest = FareRequest(origin = "Invalid origin station", destination = "B", riderType = "Adult")
+        val fareRequestArgs = FareRequest(origin = "Invalid origin station", destination = "B", riderType = "Adult")
         // When
-        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        val result = calculateFareAdapter.calculateFare(fareRequestArgs, excelFareTariffRepository)
         // Then
         result.isErr shouldBe true
         val error = result.getError().shouldNotBeNull()
@@ -108,9 +108,9 @@ class CalculateFareAdapterTest {
     @Test
     fun `returns InvalidStationError when destination station is not in tariff`() {
         // Given
-        val dummyFareRequest = FareRequest(origin = "A", destination = "Invalid destination station", riderType = "Adult")
+        val fareRequestArgs = FareRequest(origin = "A", destination = "Invalid destination station", riderType = "Adult")
         // When
-        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        val result = calculateFareAdapter.calculateFare(fareRequestArgs, excelFareTariffRepository)
         // Then
         result.isErr shouldBe true
         val error = result.getError().shouldNotBeNull()
@@ -120,12 +120,12 @@ class CalculateFareAdapterTest {
     @Test
     fun `returns RiderTypeNotFoundError when rider type is not in tariff`() {
         // Given
-        val dummyFareRequest = FareRequest(origin = "A", destination = "B", riderType = "dummy riderType")
+        val fareRequestArgs = FareRequest(origin = "A", destination = "B", riderType = "Invalid riderType")
         // When
-        val result = calculateFareAdapter.calculateFare(dummyFareRequest, excelFareTariffRepository)
+        val result = calculateFareAdapter.calculateFare(fareRequestArgs, excelFareTariffRepository)
         // Then
         result.isErr shouldBe true
         val error = result.getError().shouldNotBeNull()
-        error.message shouldBe "Rider type not found: DUMMY RIDERTYPE"
+        error.message shouldBe "Rider type not found: INVALID RIDERTYPE"
     }
 }
