@@ -15,4 +15,3 @@ class FareRequestCommandLineUI(val fareCalculationResult: FareCalculationResult)
         println("    - Discount: $$discount $currency")
     }
 }
-// TODO: Use "with" to eliminate private variables

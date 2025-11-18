@@ -29,10 +29,11 @@ private const val CURRENCY_COLUMN_NUMBER = 0
 
 private const val PRODUCT_SHEET_NUMBER = 0
 
-class ExcelFareTariffRepository : FareTariffPort {
+class ExcelFareTariffRepository(
+    private val configuredVersion: Int? = null
+)  : FareTariffPort {
     private val logger = KotlinLogging.logger {}
-    // TODO: Excel repository should be able to find the latest version (5 story points)
-    private val file = File("src/main/kotlin/config/tariff_V1.xlsx")
+    private val file = findTariffFile(configuredVersion)
     private val currency = findCurrency()
 
     fun <T> withWorkbook(operation: (Workbook) -> T): T = FileInputStream(file).use{ inputStream ->
@@ -41,7 +42,7 @@ class ExcelFareTariffRepository : FareTariffPort {
         }
     }
 
-    // TODO: Implement cache for better performance(journeysSheet, fareSheet and productsSheet) (8 story points)
+    // TODO: Implement cache for better performance(journeysSheet, fareSheet and productsSheet) (Would be implemented on the 4 phase if needed)
 
     override fun findFare(trip: Trip): FareCalculationResult = withWorkbook { workbook ->
         try {
@@ -232,6 +233,57 @@ class ExcelFareTariffRepository : FareTariffPort {
             CellType.STRING -> cell.stringCellValue.trim()
             CellType.NUMERIC -> cell.numericCellValue.toString()
             else -> ""
+        }
+    }
+
+    private fun findTariffFile(version: Int?): File {
+        val directory = File("src/main/kotlin/config")
+
+        if (!directory.exists() || !directory.isDirectory) {
+            throw IllegalStateException("Config directory not found: ${directory.absolutePath}")
+        }
+
+        return if (version != null) {
+            findSpecificVersion(directory, version)
+        } else {
+            findLatestVersion(directory)
+        }
+    }
+
+    private fun findSpecificVersion(directory: File, version: Int): File {
+        val file = File(directory, "tariff_V$version.xlsx")
+
+        if (!file.exists()) {
+            throw IllegalStateException(
+                "Tariff version V$version not found at ${file.absolutePath}"
+            )
+        }
+
+        logger.info { "Using configured tariff version: V$version" }
+        return file
+    }
+
+    private fun findLatestVersion(directory: File): File {
+        val tariffPattern = Regex("""tariff_V(\d+)\.xlsx""")
+
+        val latestFile = directory.listFiles()
+            ?.asSequence()
+            ?.filter { it.isFile }
+            ?.mapNotNull { file ->
+                tariffPattern.find(file.name)?.let { match ->
+                    val version = match.groupValues[1].toInt()
+                    version to file
+                }
+            }
+            ?.maxByOrNull { it.first }
+
+        return if (latestFile != null) {
+            logger.info { "Using latest tariff version: V${latestFile.first}" }
+            latestFile.second
+        } else {
+            throw IllegalStateException(
+                "No tariff file found matching pattern 'tariff_V*.xlsx' in ${directory.absolutePath}"
+            )
         }
     }
 

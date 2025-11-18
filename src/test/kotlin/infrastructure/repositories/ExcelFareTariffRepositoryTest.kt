@@ -16,7 +16,7 @@ import java.time.LocalTime
 
 class ExcelFareTariffRepositoryTest {
 
-    private val repository = ExcelFareTariffRepository()
+    private val repository = ExcelFareTariffRepository(1)
 
     companion object {
         // Test data based on your tariff structure
